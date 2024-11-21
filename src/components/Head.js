@@ -3,12 +3,15 @@ import { toggleMenu } from '../utils/appSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { YOUTUBE_SEARCH_API } from '../utils/constants';
 import store from '../utils/store';
+import { cacheResults } from '../utils/searchSlice';
 
 const Head = () => {
   const [searchQuery,setSearchQuery]=useState("");
   const[suggestions,setSuggestions]=useState([]); 
   const [showSuggestions, setShowSuggestions]=useState(false); 
+  
   const searchCache=useSelector(store=>store.search);
+  const dispatch=useDispatch();
 
   useEffect(()=>{
    const timer=setTimeout(()=>{if(searchCache[searchQuery]){
@@ -22,12 +25,14 @@ const Head = () => {
    }
   },[searchQuery])
 
-  const dispatch=useDispatch();
 
   const getSearchSuggestions=async()=>{
     const data=await fetch(YOUTUBE_SEARCH_API+searchQuery)
     const json=await data.json();
      setSuggestions(json[1]);
+     dispatch(cacheResults({
+      [searchQuery]:json[1],
+     }))
   }
 
 
@@ -52,28 +57,38 @@ const Head = () => {
             alt="Logo"
           />
         </div>
-  
-        <div className="flex items-center space-x-1">
-          <div>
-          <input
-            type="text"
-            className="border border-gray-400 rounded rounded-l-full px-6  py-1"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e)=>setSearchQuery (e.target.value)}
-            onFocus={()=>setShowSuggestions(true)}
-            onBlur={()=>setShowSuggestions(false)}
+        <div className="relative flex items-center space-x-1">
+    <div className="relative">
+      <input
+        type="text"
+        className="border border-gray-400 rounded-l-full px-6 py-1 w-[30rem] focus:outline-none focus:ring focus:border-blue-300"
+        placeholder="Search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow click on suggestions
+      />
+      <button className="px-4 py-1 bg-blue-500 text-white rounded-r-full">
+        🔍
+      </button>
 
-          />
-          <button className="px-4 py-1  bg-blue-500 text-white rounded rounded-r-full">🔍</button>
-          </div>  
-          {showSuggestions&&( <div className='fixed bg-white py-2 px-5 w-[37rem] shadow-lg rounded-lg border border-gray-400'>
-            <ul>
-              {suggestions.map(s=><li key={s} className='hover:bg-gray-100'>🔍{s}</li>)}
-
-            </ul>
-          </div>)}
+      {showSuggestions && (
+        <div className="absolute top-full left-0 bg-white py-2 px-4 w-full mt-1 shadow-lg rounded-lg border border-gray-300 z-50">
+          <ul>
+            {suggestions.map((s) => (
+              <li
+                key={s}
+                className="py-2 px-3 hover:bg-gray-100 cursor-pointer rounded-md"
+              >
+                🔍 {s}
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
+    </div>
+  </div>
+
   
         <div>
           <img
