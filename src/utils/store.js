@@ -7,6 +7,7 @@ const store=configureStore({
 reducer:{
     app: appSlice,
     search:searchSlice,
+    chat:chatSice,
 },
 });
 
